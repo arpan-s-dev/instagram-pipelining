@@ -1,0 +1,8 @@
+# --- secrets / login (NEVER commit) ---
+cookies.txt
+ig_session/
+*.session
+.env
+.env.local
+!.env.example
+
