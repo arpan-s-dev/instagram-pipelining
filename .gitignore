@@ -6,3 +6,50 @@ ig_session/
 .env.local
 !.env.example
 
+# --- harvested personal data ---
+links.txt
+links.jsonl
+labels.jsonl
+
+# --- downloaded media (large) ---
+videos/
+*.mp4
+*.m4a
+*.webm
+*.jpg
+*.jpeg
+*.png
+*.webp
+!docs/**
+
+# --- generated notes and bundles ---
+notes/
+bundles/
+bundles_by_category/
+
+# --- debug / local artifacts ---
+debug_harvest.py
+debug_collection.png
+.claude/
+
+# --- python ---
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+.venv/
+venv/
+env/
+*.egg-info/
+
+# --- OS / editor ---
+.DS_Store
+Thumbs.db
+Desktop.ini
+.idea/
+.vscode/
+*.swp
+
+# --- huggingface / whisper cache (if ever local) ---
+.cache/
+models/
