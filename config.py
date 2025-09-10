@@ -28,3 +28,43 @@ MAX_STALE_SCROLLS = 8                   # higher for large saved libraries
 
 # Optional: extra collection URLs (auto-discovery also runs on /saved/)
 EXTRA_COLLECTIONS: list[str] = []
+
+# --- classify ---
+# Each category: slug (folder name), display name, keywords (lowercase).
+# Stage 4 scores note text against keywords; best match wins.
+# Ties / low scores go to "other". Refine keywords anytime.
+CATEGORIES = [
+    {
+        "slug": "claude-ai-skills",
+        "name": "Claude / AI Skills",
+        "keywords": [
+            "claude", "anthropic", "cursor", "prompt", "mcp", "opus", "sonnet",
+            "artifacts", "claude code", "system prompt",
+        ],
+    },
+    {
+        "slug": "ai-hacks",
+        "name": "AI Hacks",
+        "keywords": [
+            "chatgpt", "openai", "gemini", "copilot", "llm", "ai tool", "midjourney",
+            "stable diffusion", "perplexity", "agent", "rag", "fine-tune", "gpt",
+        ],
+    },
+    {
+        "slug": "github-repos",
+        "name": "GitHub Repos",
+        "keywords": [
+            "github", "gitlab", "repository", "repo", "open source", "star this",
+            "pull request", "readme", "npm install", "pip install",
+        ],
+    },
+    {
+        "slug": "internship-hacks",
+        "name": "Internship Hacks",
+        "keywords": [
+            "internship", "intern", "recruiter", "referral", "leetcode", "oa",
+            "online assessment", "resume", "cold email", "linkedin", "handshake",
+            "career fair", "new grad", "ng", "faang", "application",
+        ],
+    },
+    {
