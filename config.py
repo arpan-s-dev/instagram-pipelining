@@ -68,3 +68,94 @@ CATEGORIES = [
         ],
     },
     {
+        "slug": "career-productivity",
+        "name": "Career & Productivity",
+        "keywords": [
+            "productivity", "deep work", "notion", "calendar", "habit", "routine",
+            "time management", "pomodoro", "second brain", "job", "interview",
+        ],
+    },
+    {
+        "slug": "psychology-hacks",
+        "name": "Psychology Hacks",
+        "keywords": [
+            "psychology", "dopamine", "cognitive", "mindset", "anxiety", "therapy",
+            "habit loop", "discipline", "motivation", "stoic", "mental", "emotion",
+            "procrastination", "focus",
+        ],
+    },
+    {
+        "slug": "philosophy",
+        "name": "Philosophy",
+        "keywords": [
+            "philosophy", "philosopher", "existential", "nihilism", "stoicism",
+            "seneca", "marcus aurelius", "nietzsche", "socrates", "meaning",
+            "ethics", "wisdom",
+        ],
+    },
+    {
+        "slug": "lifehacks",
+        "name": "Lifehacks",
+        "keywords": [
+            "life hack", "lifehack", "tip", "trick", "how to", "hack", "save money",
+            "clean", "organize", "cooking", "travel", "shortcut",
+        ],
+    },
+    {
+        "slug": "tech-dev",
+        "name": "Tech & Dev",
+        "keywords": [
+            "python", "javascript", "react", "api", "docker", "kubernetes", "aws",
+            "linux", "terminal", "debug", "code", "programming", "developer",
+            "database", "sql", "typescript", "rust", "java",
+        ],
+    },
+    {
+        "slug": "finance-business",
+        "name": "Finance & Business",
+        "keywords": [
+            "money", "invest", "stock", "crypto", "startup", "business", "revenue",
+            "marketing", "sales", "entrepreneur", "budget", "finance",
+        ],
+    },
+    {
+        "slug": "health-fitness",
+        "name": "Health & Fitness",
+        "keywords": [
+            "workout", "gym", "fitness", "health", "sleep", "nutrition", "protein",
+            "meditation", "yoga", "run", "lift",
+        ],
+    },
+    {
+        "slug": "events-deadlines",
+        "name": "Events & Deadlines",
+        "keywords": [
+            "event", "deadline", "hackathon", "conference", "webinar",
+            "workshop", "meetup", "apply by", "closing date", "rsvp",
+            "career fair", "office hours",
+        ],
+    },
+    {
+        "slug": "news-updates",
+        "name": "News & Updates",
+        "keywords": [
+            "update", "announcement", "launch", "release", "new feature",
+            "changelog", "breaking", "now available", "just dropped",
+        ],
+    },
+    {
+        "slug": "creativity-design",
+        "name": "Creativity & Design",
+        "keywords": [
+            "design", "figma", "ui", "ux", "creative", "art", "video edit",
+            "photography", "canva", "aesthetic",
+        ],
+    },
+    {
+        "slug": "other",
+        "name": "Other / Uncategorized",
+        "keywords": [],  # catch-all when nothing else scores
+    },
+]
+
+MIN_CLASSIFY_SCORE = 1   # minimum keyword hits to assign (else → other)
