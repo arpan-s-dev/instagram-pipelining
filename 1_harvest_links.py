@@ -108,3 +108,64 @@ async def page_ready(page) -> bool:
         return False
     return await post_link_count(page) > 0
 
+
+async def wait_for_login(page, probe: str, timeout_sec=300):
+    if not await page_ready(page):
+        print("\n>>> Log in in the browser window.")
+        print(">>> Script detects saved posts automatically — do NOT close the browser.\n")
+
+    start = time.monotonic()
+    while not await page_ready(page):
+        elapsed = int(time.monotonic() - start)
+        if elapsed > timeout_sec:
+            raise TimeoutError("Login timed out. Export cookies.txt and re-run.")
+        if elapsed % 15 == 0 and elapsed > 0:
+            print(f"    ...waiting for saved posts ({elapsed}s)")
+        await asyncio.sleep(2)
+
+    if probe not in page.url:
+        await page.goto(probe, wait_until="domcontentloaded", timeout=60000)
+        await human_delay(2, 3)
+    print(f"Ready — {await post_link_count(page)} posts visible.\n")
+
+
+async def harvest_page(page, url: str, collection: str) -> list[dict]:
+    """Scroll a saved page and return link records."""
+    print(f"\n--- Harvesting: {collection}")
+    print(f"    {url}")
+    await page.goto(url, wait_until="domcontentloaded", timeout=60000)
+    await human_delay(3, 5)
+
+    if not await page_ready(page):
+        print("!! Skipping (login required or empty).")
+        return []
+
+    found: dict[str, dict] = {}
+    stale = 0
+
+    while stale < MAX_STALE_SCROLLS:
+        hrefs = await page.eval_on_selector_all(
+            POST_SELECTOR,
+            "els => els.map(e => e.href)",
+        )
+        before = len(found)
+        for h in hrefs:
+            clean = normalize_url(h)
+            found[clean] = {
+                "url": clean,
+                "collection": collection,
+                "kind": url_kind(clean),
+            }
+        gained = len(found) - before
+
+        if gained == 0:
+            stale += 1
+        else:
+            stale = 0
+            print(f"    ...{len(found)} links")
+
+        await page.mouse.wheel(0, random.randint(1500, 2500))
+        await human_delay(*SCROLL_PAUSE)
+
+    print(f"--- Done: {len(found)} links from {collection}")
+    return list(found.values())
