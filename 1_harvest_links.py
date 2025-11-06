@@ -169,3 +169,33 @@ async def harvest_page(page, url: str, collection: str) -> list[dict]:
 
     print(f"--- Done: {len(found)} links from {collection}")
     return list(found.values())
+
+
+async def discover_collections(page) -> list[tuple[str, str]]:
+    """Return (url, name) for every saved collection on /saved/."""
+    index = f"https://www.instagram.com/{USERNAME}/saved/"
+    await page.goto(index, wait_until="domcontentloaded", timeout=60000)
+    await human_delay(3, 5)
+
+    hrefs = await page.eval_on_selector_all(
+        "a[href*='/saved/']",
+        "els => els.map(e => e.href)",
+    )
+    seen = set()
+    collections = []
+    for h in hrefs:
+        clean = h.split("?")[0].rstrip("/")
+        if not COLLECTION_RE.search(clean):
+            continue
+        if clean in seen:
+            continue
+        seen.add(clean)
+        name = collection_name_from_url(clean + "/")
+        collections.append((clean + "/", name))
+
+    # all-posts handled separately
+    collections = [(u, n) for u, n in collections if n != "all-posts"]
+    print(f"Discovered {len(collections)} collections on /saved/")
+    for _, name in collections:
+        print(f"    • {name}")
+    return collections
