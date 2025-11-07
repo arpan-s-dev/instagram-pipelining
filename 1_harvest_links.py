@@ -199,3 +199,86 @@ async def discover_collections(page) -> list[tuple[str, str]]:
     for _, name in collections:
         print(f"    • {name}")
     return collections
+
+
+async def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--fresh", action="store_true", help="Delete ig_session/ and start clean")
+    args = parser.parse_args()
+
+    if args.fresh and SESSION_DIR.exists():
+        shutil.rmtree(SESSION_DIR)
+        print(f"Deleted {SESSION_DIR}/\n")
+
+    all_posts_url = f"https://www.instagram.com/{USERNAME}/saved/all-posts/"
+    probe = all_posts_url
+
+    records: dict[str, dict] = {}
+
+    async with async_playwright() as p:
+        ctx = await p.chromium.launch_persistent_context(
+            user_data_dir=str(SESSION_DIR),
+            headless=False,
+            channel="chrome",
+            viewport={"width": 1280, "height": 900},
+            locale="en-US",
+            args=["--disable-blink-features=AutomationControlled"],
+        )
+        await ctx.add_init_script(STEALTH_INIT)
+        page = ctx.pages[0] if ctx.pages else await ctx.new_page()
+
+        if COOKIES_FILE.exists():
+            cookies = load_cookies_txt(COOKIES_FILE)
+            ig = [c for c in cookies if "instagram.com" in c.get("domain", "")]
+            await ctx.add_cookies(ig)
+            print(f"Loaded {len(ig)} cookies from {COOKIES_FILE}")
+            await page.goto(probe, wait_until="domcontentloaded", timeout=60000)
+            await human_delay(3, 5)
+            if not await page_ready(page):
+                print("cookies.txt invalid — trying manual login.\n")
+                await wait_for_login(page, probe)
+            else:
+                print("Cookies OK.\n")
+        else:
+            print("No cookies.txt — manual login in browser.\n")
+            await page.goto(probe, wait_until="domcontentloaded", timeout=60000)
+            await wait_for_login(page, probe)
+
+        # 1) All saved posts (reels + photos)
+        for rec in await harvest_page(page, all_posts_url, "all-posts"):
+            records[rec["url"]] = rec
+
+        # 2) Auto-discovered collections
+        for url, name in await discover_collections(page):
+            for rec in await harvest_page(page, url, name):
+                # Keep first collection tag; all-posts already captured the URL
+                if rec["url"] not in records:
+                    records[rec["url"]] = rec
+                elif records[rec["url"]]["collection"] == "all-posts":
+                    records[rec["url"]]["collection"] = name
+
+        # 3) Manual extras from config
+        for url in EXTRA_COLLECTIONS:
+            coll = collection_name_from_url(url)
+            for rec in await harvest_page(page, url, coll):
+                if rec["url"] not in records:
+                    records[rec["url"]] = rec
+
+        await ctx.close()
+
+    sorted_records = sorted(records.values(), key=lambda r: r["url"])
+    LINKS_TXT.write_text("\n".join(r["url"] for r in sorted_records), encoding="utf-8")
+    with LINKS_JSONL.open("w", encoding="utf-8") as f:
+        for rec in sorted_records:
+            f.write(json.dumps(rec) + "\n")
+
+    reels = sum(1 for r in sorted_records if r["kind"] == "reel")
+    posts = sum(1 for r in sorted_records if r["kind"] == "post")
+    print(f"\nWrote {len(sorted_records)} unique links")
+    print(f"  reels: {reels}  photos/posts: {posts}")
+    print(f"  {LINKS_TXT.resolve()}")
+    print(f"  {LINKS_JSONL.resolve()}")
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
