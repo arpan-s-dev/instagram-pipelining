@@ -25,3 +25,29 @@ def to_netscape(cookies: list[dict]) -> str:
         )
     return "\n".join(lines) + "\n"
 
+
+async def main():
+    if not SESSION_DIR.exists():
+        print(f"No {SESSION_DIR}/ — log in via 1_harvest_links.py first.")
+        return
+
+    async with async_playwright() as p:
+        ctx = await p.chromium.launch_persistent_context(
+            user_data_dir=str(SESSION_DIR),
+            headless=True,
+            channel="chrome",
+        )
+        all_cookies = await ctx.cookies("https://www.instagram.com")
+        await ctx.close()
+
+    ig = [c for c in all_cookies if "instagram.com" in c.get("domain", "")]
+    if not ig:
+        print("No Instagram cookies found in ig_session.")
+        return
+
+    OUT.write_text(to_netscape(ig), encoding="utf-8")
+    print(f"Wrote {len(ig)} cookies to {OUT.resolve()}")
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
