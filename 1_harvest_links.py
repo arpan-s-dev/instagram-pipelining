@@ -109,7 +109,7 @@ async def page_ready(page) -> bool:
     return await post_link_count(page) > 0
 
 
-async def wait_for_login(page, probe: str, timeout_sec=300):
+async def wait_for_login(page, probe: str, timeout_sec=300  # 5 min for 2FA / checkpoint):
     if not await page_ready(page):
         print("\n>>> Log in in the browser window.")
         print(">>> Script detects saved posts automatically — do NOT close the browser.\n")
