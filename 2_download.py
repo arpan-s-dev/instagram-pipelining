@@ -23,3 +23,19 @@ def main():
         return
 
     MEDIA_DIR.mkdir(exist_ok=True)
+    urls = [
+        line.strip()
+        for line in LINKS_TXT.read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
+    valid_urls = [url for url in urls if VALID_URL.match(url)]
+    skipped = len(urls) - len(valid_urls)
+    print(f"Downloading {len(valid_urls)} valid items...")
+    if skipped:
+        print(f"Skipping {skipped} malformed link(s).")
+    print()
+
+    with tempfile.NamedTemporaryFile("w", encoding="utf-8", suffix=".txt", delete=False) as tf:
+        tf.write("\n".join(valid_urls) + "\n")
+        url_file = tf.name
+
