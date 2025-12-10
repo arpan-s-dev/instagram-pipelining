@@ -39,3 +39,31 @@ def main():
         tf.write("\n".join(valid_urls) + "\n")
         url_file = tf.name
 
+    try:
+        cmd = [
+            "yt-dlp",
+            "-a", url_file,
+            "-o", str(MEDIA_DIR / "%(id)s.%(ext)s"),
+            "--write-info-json",
+            "--no-overwrites",
+            "--sleep-interval", "3",
+            "--max-sleep-interval", "7",
+            "--ignore-errors",
+        ]
+        if COOKIES_FILE.exists():
+            cmd += ["--cookies", str(COOKIES_FILE)]
+            print(f"Using cookies from {COOKIES_FILE}")
+        else:
+            print("WARNING: no cookies.txt — saved items will likely fail.")
+
+        subprocess.run(cmd)
+    finally:
+        Path(url_file).unlink(missing_ok=True)
+    mp4 = len(list(MEDIA_DIR.glob("*.mp4")))
+    img = len(list(MEDIA_DIR.glob("*.jpg"))) + len(list(MEDIA_DIR.glob("*.webp")))
+    print(f"\nDone. {MEDIA_DIR.resolve()}")
+    print(f"  videos: {mp4}  images: {img}")
+
+
+if __name__ == "__main__":
+    main()
