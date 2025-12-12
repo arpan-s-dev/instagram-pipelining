@@ -45,7 +45,7 @@ def main():
             "-a", url_file,
             "-o", str(MEDIA_DIR / "%(id)s.%(ext)s"),
             "--write-info-json",
-            "--no-overwrites",
+            "--no-overwrites",  # resume-safe
             "--sleep-interval", "3",
             "--max-sleep-interval", "7",
             "--ignore-errors",
