@@ -59,3 +59,39 @@ def load_model():
         print(f"Whisper '{MODEL_SIZE}' on CPU (int8).")
         return m
 
+
+def extract_audio(video: Path, out_wav: Path):
+    subprocess.run(
+        ["ffmpeg", "-y", "-i", str(video), "-vn", "-ac", "1", "-ar", "16000", str(out_wav)],
+        check=True, capture_output=True,
+    )
+
+
+def transcribe(model, wav: Path) -> str:
+    segments, _ = model.transcribe(str(wav), beam_size=5)
+    return " ".join(seg.text.strip() for seg in segments).strip()
+
+
+def sample_frames(video: Path, tmpdir: Path, n: int):
+    probe = subprocess.run(
+        ["ffprobe", "-v", "error", "-show_entries", "format=duration",
+         "-of", "default=noprint_wrappers=1:nokey=1", str(video)],
+        capture_output=True, text=True,
+    )
+    try:
+        dur = float(probe.stdout.strip())
+    except ValueError:
+        dur = 10.0
+    frames = []
+    for i in range(n):
+        t = dur * (i + 1) / (n + 1)
+        fp = tmpdir / f"frame_{i}.jpg"
+        subprocess.run(
+            ["ffmpeg", "-y", "-ss", str(t), "-i", str(video),
+             "-frames:v", "1", "-q:v", "3", str(fp)],
+            check=True, capture_output=True,
+        )
+        if fp.exists():
+            frames.append(fp)
+    return frames
+
