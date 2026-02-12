@@ -147,3 +147,55 @@ def write_note(note_path: Path, media_id: str, kind: str, source: str,
     )
     note_path.write_text(note, encoding="utf-8")
 
+
+def main():
+    NOTES_DIR.mkdir(exist_ok=True)
+    all_media = sorted(
+        p for p in MEDIA_DIR.iterdir()
+        if p.suffix.lower() in VIDEO_EXTS | IMAGE_EXTS
+    )
+    if not all_media:
+        print(f"No media in {MEDIA_DIR}. Run 2_download.py first.")
+        return
+
+    videos = [p for p in all_media if media_kind(p) == "video"]
+    images = [p for p in all_media if media_kind(p) == "image"]
+    print(f"Found {len(videos)} videos, {len(images)} images.\n")
+
+    model = load_model() if videos else None
+
+    for media in all_media:
+        note_path = NOTES_DIR / f"{media.stem}.md"
+        if note_path.exists():
+            print(f"skip: {media.name}")
+            continue
+
+        kind = media_kind(media)
+        print(f"processing ({kind}): {media.name}")
+        try:
+            caption, source = get_meta(media)
+            transcript = "(none)"
+            onscreen = "(none)"
+
+            if kind == "video":
+                with tempfile.TemporaryDirectory() as td:
+                    td = Path(td)
+                    wav = td / "audio.wav"
+                    extract_audio(media, wav)
+                    transcript = transcribe(model, wav) or "(none)"
+                    frames = sample_frames(media, td, NUM_FRAMES)
+                    onscreen = ocr_frames(frames) or "(none)"
+            else:
+                onscreen = ocr_image(media) or "(none)"
+
+            write_note(note_path, media.stem, kind, source, caption, transcript, onscreen)
+            print(f"   -> {note_path}")
+        except Exception as e:
+            print(f"   !! failed: {e}")
+
+    print(f"\nDone. Notes in {NOTES_DIR.resolve()}")
+    print("Next: python 4_classify.py")
+
+
+if __name__ == "__main__":
+    main()
