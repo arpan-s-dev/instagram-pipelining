@@ -95,3 +95,55 @@ def sample_frames(video: Path, tmpdir: Path, n: int):
             frames.append(fp)
     return frames
 
+
+def ocr_image(path: Path) -> str:
+    try:
+        return pytesseract.image_to_string(Image.open(path)).strip()
+    except Exception:
+        return ""
+
+
+def ocr_frames(frames) -> str:
+    seen = []
+    for fp in frames:
+        for line in ocr_image(fp).splitlines():
+            line = line.strip()
+            if len(line) >= 3 and line not in seen:
+                seen.append(line)
+    return "\n".join(seen)
+
+
+def get_meta(media: Path) -> tuple[str, str]:
+    """Return (caption, source_url)."""
+    info = media.with_suffix(".info.json")
+    caption, source = "", ""
+    if info.exists():
+        try:
+            data = json.loads(info.read_text(encoding="utf-8"))
+            caption = data.get("description") or data.get("title") or ""
+            source = data.get("webpage_url") or data.get("url") or ""
+        except Exception:
+            pass
+    if not source:
+        stem = media.stem
+        source = f"https://www.instagram.com/p/{stem}/"
+    return caption, source
+
+
+def media_kind(path: Path) -> str:
+    return "video" if path.suffix.lower() in VIDEO_EXTS else "image"
+
+
+def write_note(note_path: Path, media_id: str, kind: str, source: str,
+               caption: str, transcript: str, onscreen: str):
+    title = "Reel" if kind == "video" else "Photo"
+    note = (
+        f"# {title} {media_id}\n\n"
+        f"kind: {kind}\n"
+        f"source: {source}\n\n"
+        f"## Caption\n{caption or '(none)'}\n\n"
+        f"## Transcript\n{transcript or '(none)'}\n\n"
+        f"## On-screen text (OCR)\n{onscreen or '(none)'}\n"
+    )
+    note_path.write_text(note, encoding="utf-8")
+
