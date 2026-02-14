@@ -194,7 +194,7 @@ def main():
             print(f"   !! failed: {e}")
 
     print(f"\nDone. Notes in {NOTES_DIR.resolve()}")
-    print("Next: python 4_classify.py")
+    print("Next: python 4_classify.py")  # category bundles
 
 
 if __name__ == "__main__":
