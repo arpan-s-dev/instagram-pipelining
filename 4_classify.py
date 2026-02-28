@@ -141,7 +141,7 @@ def main():
     print(f"\nWrote {LABELS_FILE} ({len(labels)} labels)")
     print(f"Category bundles: {CATEGORY_BUNDLES_DIR.resolve()}")
     print("\nReview bundles_by_category/_summary.md")
-    print("Paste any category .md into Claude to refine labels or build a searchable index.")
+    print("Paste any category .md into Claude to refine labels, extract events, or build a searchable index.")
 
 
 if __name__ == "__main__":
