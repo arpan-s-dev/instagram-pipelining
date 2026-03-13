@@ -9,7 +9,7 @@ from pathlib import Path
 
 from config import NOTES_DIR, BUNDLES_DIR
 
-BATCH_SIZE = 25
+BATCH_SIZE = 25  # keep pastes under typical chat limits
 
 
 def main():
