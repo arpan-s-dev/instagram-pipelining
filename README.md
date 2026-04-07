@@ -29,3 +29,65 @@ Instagram Saved  →  links  →  videos/photos  →  notes  →  labeled bundle
 
 Paste a category bundle into Claude (or any chat) to summarize, extract event dates, or build a tracker.
 
+---
+
+## Stack
+
+| Layer | Tech |
+|-------|------|
+| Browser harvest | Playwright + your installed Chrome |
+| Auth | `cookies.txt` or a local `ig_session/` profile |
+| Download | yt-dlp |
+| Audio / frames | ffmpeg |
+| Transcript | faster-whisper (GPU if available, else CPU) |
+| On-screen text | Tesseract + Pillow |
+| Labels | keyword scoring in `config.py` |
+
+---
+
+## Setup
+
+**Python 3.10+**, plus system tools:
+
+```powershell
+pip install -r requirements.txt
+playwright install chromium
+winget install Gyan.FFmpeg
+winget install UB-Mannheim.TesseractOCR
+```
+
+Set your Instagram username (no `@`):
+
+```powershell
+$env:IG_USERNAME = "your_username"
+```
+
+Optional Tesseract path on Windows:
+
+```powershell
+$env:TESSERACT_CMD = "C:\Program Files\Tesseract-OCR\tesseract.exe"
+```
+
+### Cookies (needed for saved / private items)
+
+1. Log into Instagram in Chrome.
+2. Export cookies with a “Get cookies.txt LOCALLY” extension.
+3. Save the file as `cookies.txt` in this folder.
+
+You can also run `python export_cookies.py` after a successful Playwright login to write `cookies.txt` from `ig_session/`.
+
+---
+
+## Run
+
+```powershell
+python 1_harvest_links.py    # visible Chrome; log in if asked
+python 2_download.py         # skips files already in videos/
+python 3_process.py          # skips notes already written
+python 4_classify.py
+```
+
+Harvest uses `/saved/all-posts/` plus auto-discovered collections. It does **not** need a hardcoded collection list.
+
+Downloads and notes are incremental: re-running skips work that already exists.
+
