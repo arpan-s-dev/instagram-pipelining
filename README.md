@@ -91,3 +91,54 @@ Harvest uses `/saved/all-posts/` plus auto-discovered collections. It does **not
 
 Downloads and notes are incremental: re-running skips work that already exists.
 
+---
+
+## Categories
+
+Edit `CATEGORIES` in `config.py`. Defaults include:
+
+- Claude / AI Skills, AI Hacks, GitHub Repos
+- Internship Hacks, Career & Productivity
+- Events & Deadlines, News & Updates
+- Psychology, Philosophy, Lifehacks
+- Tech & Dev, Finance, Health, Design
+- Other
+
+Tune keywords, then re-run `python 4_classify.py`.
+
+---
+
+## Privacy
+
+`.gitignore` excludes:
+
+- `cookies.txt`, `ig_session/`
+- `links.txt`, `links.jsonl`, `labels.jsonl`
+- `videos/`, `notes/`, `bundles/`, `bundles_by_category/`
+
+Do not commit cookies, session folders, or harvested URLs.
+
+---
+
+## Honest limits
+
+- Automating a logged-in Instagram session can conflict with Instagram’s terms. Use only on **your own** saved content, for personal use.
+- Harvest runs a **visible** Chrome window and scrolls slowly.
+- Some posts fail to download (deleted, restricted, or expired cookies).
+- Keyword labels are a first pass — refine with Claude if a bucket is too large.
+
+---
+
+## Project layout
+
+```
+instagram-pipelining/
+  1_harvest_links.py
+  2_download.py
+  3_process.py
+  4_classify.py
+  bundle_for_claude.py
+  export_cookies.py
+  config.py
+  requirements.txt
+```
