@@ -6,7 +6,7 @@ Saved content is easy to forget. This pipeline harvests those saves, downloads t
 
 - find **useful events and deadlines** buried in Reels
 - **track updates** (launches, internships, tools, repos)
-- search hacks later instead of scrolling Saved again
+- search hacks later instead of scrolling Saved again — including events and product updates
 
 Everything stays on your machine. Nothing is uploaded.
 
