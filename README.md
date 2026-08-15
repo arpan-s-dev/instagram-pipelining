@@ -4,6 +4,8 @@ Local scripts that pull **your saved Instagram Reels and posts**, then turn them
 
 Nothing is uploaded. Media and notes stay on disk.
 
+> **Warning — Meta / Instagram may ban or checkpoint the account.** Harvest uses an automated Chrome session (Playwright) and download hits Instagram through yt-dlp with your cookies. That looks like bot traffic. You can get a login challenge, a temporary lock, or a permanent ban. Only run this on **your own** saved content, slowly, and not on a loop. I am not responsible if Instagram/Meta restricts the account.
+
 ## Pipelining diagram
 
 ```mermaid
@@ -268,7 +270,7 @@ python 3_process.py          # skips notes that already exist
 python 4_classify.py         # labels.jsonl + bundles_by_category/
 ```
 
-`2` and `3` are safe to re-run. Harvest scrolls `/saved/all-posts/` then whatever collections it finds on `/saved/`.
+`2` and `3` are safe to re-run. Harvest scrolls `/saved/all-posts/` then whatever collections it finds on `/saved/`. Stages 1 and 2 are the ones that can trip Meta's anti-bot checks — don't hammer them.
 
 Optional: `python bundle_for_claude.py` dumps notes into 25-item files under `bundles/` if you don't care about categories.
 
