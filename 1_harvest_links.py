@@ -1,20 +1,4 @@
-"""
-Stage 1 — Harvest ALL saved reels and photos from Instagram.
-
-Opens a visible Chrome window (or uses cookies.txt / ig_session).
-
-Harvest order:
-  1. /saved/all-posts/  — everything you've saved
-  2. Auto-discovered collections from /saved/
-  3. Any EXTRA_COLLECTIONS in config.py
-
-Writes:
-  links.txt   — one URL per line (for yt-dlp)
-  links.jsonl — url + collection + kind metadata (for labeling)
-
-Run:  python 1_harvest_links.py
-      python 1_harvest_links.py --fresh
-"""
+"""Harvest saved Instagram posts/reels into links.txt + links.jsonl."""
 
 import argparse
 import asyncio
@@ -24,6 +8,7 @@ import re
 import shutil
 import time
 from pathlib import Path
+
 from playwright.async_api import async_playwright
 
 from config import (
@@ -56,7 +41,7 @@ def load_cookies_txt(path: Path) -> list[dict]:
         if len(parts) != 7:
             continue
         domain, _, cpath, secure, expiry, name, value = parts
-        c: dict = {
+        cookie = {
             "name": name,
             "value": value,
             "domain": domain,
@@ -64,8 +49,8 @@ def load_cookies_txt(path: Path) -> list[dict]:
             "secure": secure.upper() == "TRUE",
         }
         if expiry.isdigit() and int(expiry) > 0:
-            c["expires"] = int(expiry)
-        cookies.append(c)
+            cookie["expires"] = int(expiry)
+        cookies.append(cookie)
     return cookies
 
 
@@ -91,10 +76,7 @@ async def human_delay(a, b):
 
 
 async def needs_login(page) -> bool:
-    url = page.url
-    if "/accounts/login" in url:
-        return True
-    if "accountscenter.meta.com" in url:
+    if "/accounts/login" in page.url or "accountscenter.meta.com" in page.url:
         return True
     return await page.query_selector("input[name='username']") is not None
 
@@ -109,10 +91,9 @@ async def page_ready(page) -> bool:
     return await post_link_count(page) > 0
 
 
-async def wait_for_login(page, probe: str, timeout_sec=300  # 5 min for 2FA / checkpoint):
+async def wait_for_login(page, probe: str, timeout_sec=300):
     if not await page_ready(page):
-        print("\n>>> Log in in the browser window.")
-        print(">>> Script detects saved posts automatically — do NOT close the browser.\n")
+        print("\nLog in in the browser window. Don't close it.\n")
 
     start = time.monotonic()
     while not await page_ready(page):
@@ -120,7 +101,7 @@ async def wait_for_login(page, probe: str, timeout_sec=300  # 5 min for 2FA / ch
         if elapsed > timeout_sec:
             raise TimeoutError("Login timed out. Export cookies.txt and re-run.")
         if elapsed % 15 == 0 and elapsed > 0:
-            print(f"    ...waiting for saved posts ({elapsed}s)")
+            print(f"    waiting for saved posts ({elapsed}s)")
         await asyncio.sleep(2)
 
     if probe not in page.url:
@@ -130,14 +111,13 @@ async def wait_for_login(page, probe: str, timeout_sec=300  # 5 min for 2FA / ch
 
 
 async def harvest_page(page, url: str, collection: str) -> list[dict]:
-    """Scroll a saved page and return link records."""
     print(f"\n--- Harvesting: {collection}")
     print(f"    {url}")
     await page.goto(url, wait_until="domcontentloaded", timeout=60000)
     await human_delay(3, 5)
 
     if not await page_ready(page):
-        print("!! Skipping (login required or empty).")
+        print("Skipping (login required or empty).")
         return []
 
     found: dict[str, dict] = {}
@@ -157,12 +137,11 @@ async def harvest_page(page, url: str, collection: str) -> list[dict]:
                 "kind": url_kind(clean),
             }
         gained = len(found) - before
-
         if gained == 0:
             stale += 1
         else:
             stale = 0
-            print(f"    ...{len(found)} links")
+            print(f"    {len(found)} links")
 
         await page.mouse.wheel(0, random.randint(1500, 2500))
         await human_delay(*SCROLL_PAUSE)
@@ -172,7 +151,6 @@ async def harvest_page(page, url: str, collection: str) -> list[dict]:
 
 
 async def discover_collections(page) -> list[tuple[str, str]]:
-    """Return (url, name) for every saved collection on /saved/."""
     index = f"https://www.instagram.com/{USERNAME}/saved/"
     await page.goto(index, wait_until="domcontentloaded", timeout=60000)
     await human_delay(3, 5)
@@ -185,19 +163,16 @@ async def discover_collections(page) -> list[tuple[str, str]]:
     collections = []
     for h in hrefs:
         clean = h.split("?")[0].rstrip("/")
-        if not COLLECTION_RE.search(clean):
-            continue
-        if clean in seen:
+        if not COLLECTION_RE.search(clean) or clean in seen:
             continue
         seen.add(clean)
         name = collection_name_from_url(clean + "/")
         collections.append((clean + "/", name))
 
-    # all-posts handled separately
     collections = [(u, n) for u, n in collections if n != "all-posts"]
     print(f"Discovered {len(collections)} collections on /saved/")
     for _, name in collections:
-        print(f"    • {name}")
+        print(f"    - {name}")
     return collections
 
 
@@ -211,8 +186,6 @@ async def main():
         print(f"Deleted {SESSION_DIR}/\n")
 
     all_posts_url = f"https://www.instagram.com/{USERNAME}/saved/all-posts/"
-    probe = all_posts_url
-
     records: dict[str, dict] = {}
 
     async with async_playwright() as p:
@@ -232,32 +205,28 @@ async def main():
             ig = [c for c in cookies if "instagram.com" in c.get("domain", "")]
             await ctx.add_cookies(ig)
             print(f"Loaded {len(ig)} cookies from {COOKIES_FILE}")
-            await page.goto(probe, wait_until="domcontentloaded", timeout=60000)
+            await page.goto(all_posts_url, wait_until="domcontentloaded", timeout=60000)
             await human_delay(3, 5)
             if not await page_ready(page):
                 print("cookies.txt invalid — trying manual login.\n")
-                await wait_for_login(page, probe)
+                await wait_for_login(page, all_posts_url)
             else:
                 print("Cookies OK.\n")
         else:
-            print("No cookies.txt — manual login in browser.\n")
-            await page.goto(probe, wait_until="domcontentloaded", timeout=60000)
-            await wait_for_login(page, probe)
+            print("No cookies.txt — log in in the browser.\n")
+            await page.goto(all_posts_url, wait_until="domcontentloaded", timeout=60000)
+            await wait_for_login(page, all_posts_url)
 
-        # 1) All saved posts (reels + photos)
         for rec in await harvest_page(page, all_posts_url, "all-posts"):
             records[rec["url"]] = rec
 
-        # 2) Auto-discovered collections
         for url, name in await discover_collections(page):
             for rec in await harvest_page(page, url, name):
-                # Keep first collection tag; all-posts already captured the URL
                 if rec["url"] not in records:
                     records[rec["url"]] = rec
                 elif records[rec["url"]]["collection"] == "all-posts":
                     records[rec["url"]]["collection"] = name
 
-        # 3) Manual extras from config
         for url in EXTRA_COLLECTIONS:
             coll = collection_name_from_url(url)
             for rec in await harvest_page(page, url, coll):

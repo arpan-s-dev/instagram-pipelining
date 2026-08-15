@@ -1,11 +1,4 @@
-"""
-Stage 2 — Download saved reels (.mp4) and photos (.jpg/.webp) + metadata.
-
-Reads links.txt (from stage 1) into ./videos/ (reels and photos together).
-Captions saved as .info.json next to each file.
-
-Run:  python 2_download.py
-"""
+"""Download links.txt into videos/ (mp4/jpg + .info.json). Skips files that already exist."""
 
 import re
 import subprocess
@@ -45,7 +38,7 @@ def main():
             "-a", url_file,
             "-o", str(MEDIA_DIR / "%(id)s.%(ext)s"),
             "--write-info-json",
-            "--no-overwrites",  # resume-safe
+            "--no-overwrites",
             "--sleep-interval", "3",
             "--max-sleep-interval", "7",
             "--ignore-errors",
@@ -59,6 +52,7 @@ def main():
         subprocess.run(cmd)
     finally:
         Path(url_file).unlink(missing_ok=True)
+
     mp4 = len(list(MEDIA_DIR.glob("*.mp4")))
     img = len(list(MEDIA_DIR.glob("*.jpg"))) + len(list(MEDIA_DIR.glob("*.webp")))
     print(f"\nDone. {MEDIA_DIR.resolve()}")

@@ -1,13 +1,4 @@
-"""
-Stage 3 — Transcript + OCR for reels; OCR for photos.
-
-Videos: ffmpeg audio → faster-whisper → frame OCR → notes/<id>.md
-Photos:  OCR (+ caption from .info.json) → notes/<id>.md
-
-Run:  python 3_process.py
-
-Env:  WHISPER_DEVICE=cpu   TESSERACT_CMD="C:\\Program Files\\Tesseract-OCR\\tesseract.exe"
-"""
+"""Transcribe videos and OCR photos/frames into notes/<id>.md. Skips notes that already exist."""
 
 import json
 import os
@@ -114,7 +105,6 @@ def ocr_frames(frames) -> str:
 
 
 def get_meta(media: Path) -> tuple[str, str]:
-    """Return (caption, source_url)."""
     info = media.with_suffix(".info.json")
     caption, source = "", ""
     if info.exists():
@@ -125,8 +115,7 @@ def get_meta(media: Path) -> tuple[str, str]:
         except Exception:
             pass
     if not source:
-        stem = media.stem
-        source = f"https://www.instagram.com/p/{stem}/"
+        source = f"https://www.instagram.com/p/{media.stem}/"
     return caption, source
 
 
@@ -191,10 +180,10 @@ def main():
             write_note(note_path, media.stem, kind, source, caption, transcript, onscreen)
             print(f"   -> {note_path}")
         except Exception as e:
-            print(f"   !! failed: {e}")
+            print(f"   failed: {e}")
 
     print(f"\nDone. Notes in {NOTES_DIR.resolve()}")
-    print("Next: python 4_classify.py")  # category bundles
+    print("Next: python 4_classify.py")
 
 
 if __name__ == "__main__":

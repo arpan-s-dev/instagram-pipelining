@@ -1,15 +1,4 @@
-"""
-Stage 4 — Auto-label notes into categories (local keyword scoring).
-
-Reads notes/*.md, scores against categories in config.py, writes:
-  labels.jsonl              — one JSON record per item
-  bundles_by_category/      — one .md per category (paste into Claude to refine)
-  bundles_by_category/_summary.md — counts per category
-
-This is a first pass. Paste category bundles into Claude to fix mislabels.
-
-Run:  python 4_classify.py
-"""
+"""Keyword-label notes into bundles_by_category/ and labels.jsonl."""
 
 import json
 import re
@@ -25,7 +14,6 @@ from config import (
     LINKS_JSONL,
 )
 
-# Instagram collection name → category slug hints (boost score)
 COLLECTION_HINTS = {
     "claude-hacks": "claude-ai-skills",
     "internship": "internship-hacks",
@@ -35,21 +23,15 @@ COLLECTION_HINTS = {
 
 
 def load_collection_map() -> dict[str, str]:
-    """Map post URL → Instagram saved collection name."""
     out = {}
     if not LINKS_JSONL.exists():
         return out
     for line in LINKS_JSONL.read_text(encoding="utf-8").splitlines():
-        line = line.strip()
-        if not line:
+        if not line.strip():
             continue
         rec = json.loads(line)
         out[rec["url"]] = rec.get("collection", "unknown")
     return out
-
-
-def note_text(path: Path) -> str:
-    return path.read_text(encoding="utf-8").lower()
 
 
 def source_url(text: str) -> str:
@@ -58,7 +40,6 @@ def source_url(text: str) -> str:
 
 
 def score_categories(text: str, collection: str) -> list[tuple[str, str, int]]:
-    """Return [(slug, name, score), ...] sorted by score desc."""
     scores = []
     hint_slug = COLLECTION_HINTS.get(collection)
 
@@ -105,7 +86,7 @@ def main():
         scores = score_categories(text, collection)
         slug, name, score = pick_category(scores)
 
-        record = {
+        labels.append({
             "id": note.stem,
             "note": str(note),
             "source": src,
@@ -114,15 +95,13 @@ def main():
             "category_name": name,
             "score": score,
             "top_matches": [{"slug": s, "name": n, "score": sc} for s, n, sc in scores[:3]],
-        }
-        labels.append(record)
+        })
         by_category[slug].append(note)
 
     with LABELS_FILE.open("w", encoding="utf-8") as f:
         for rec in labels:
             f.write(json.dumps(rec) + "\n")
 
-    slug_to_name = {c["slug"]: c["name"] for c in CATEGORIES}
     summary_lines = ["# Category summary\n", f"Total items: {len(labels)}\n"]
 
     for cat in CATEGORIES:
@@ -140,8 +119,6 @@ def main():
     (CATEGORY_BUNDLES_DIR / "_summary.md").write_text("\n".join(summary_lines) + "\n", encoding="utf-8")
     print(f"\nWrote {LABELS_FILE} ({len(labels)} labels)")
     print(f"Category bundles: {CATEGORY_BUNDLES_DIR.resolve()}")
-    print("\nReview bundles_by_category/_summary.md")
-    print("Paste any category .md into Claude to refine labels, extract events, or build a searchable index.")
 
 
 if __name__ == "__main__":

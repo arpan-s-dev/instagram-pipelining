@@ -1,18 +1,14 @@
-"""Export Instagram cookies from ig_session to cookies.txt for yt-dlp."""
+"""Dump Instagram cookies from ig_session/ into cookies.txt for yt-dlp."""
+
 import asyncio
-from pathlib import Path
+
 from playwright.async_api import async_playwright
 
-SESSION_DIR = Path("ig_session")
-OUT = Path("cookies.txt")
+from config import SESSION_DIR, COOKIES_FILE
 
 
 def to_netscape(cookies: list[dict]) -> str:
-    lines = [
-        "# Netscape HTTP Cookie File",
-        "# Exported from ig_session for yt-dlp",
-        "",
-    ]
+    lines = ["# Netscape HTTP Cookie File", ""]
     for c in cookies:
         domain = c["domain"]
         include_subdomains = "TRUE" if domain.startswith(".") else "FALSE"
@@ -45,8 +41,8 @@ async def main():
         print("No Instagram cookies found in ig_session.")
         return
 
-    OUT.write_text(to_netscape(ig), encoding="utf-8")
-    print(f"Wrote {len(ig)} cookies to {OUT.resolve()}")
+    COOKIES_FILE.write_text(to_netscape(ig), encoding="utf-8")
+    print(f"Wrote {len(ig)} cookies to {COOKIES_FILE.resolve()}")
 
 
 if __name__ == "__main__":

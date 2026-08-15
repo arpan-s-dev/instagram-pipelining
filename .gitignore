@@ -27,9 +27,7 @@ notes/
 bundles/
 bundles_by_category/
 
-# --- debug / local artifacts ---
-debug_harvest.py
-debug_collection.png
+# --- debug / local ---
 .claude/
 
 # --- python ---
