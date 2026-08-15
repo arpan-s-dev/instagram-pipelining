@@ -1,6 +1,6 @@
 # Instagram Pipelining
 
-Local scripts that pull **your saved Instagram Reels and posts**, then turn them into markdown notes you can search. I use it to find events, internship stuff, and tool links I saved months ago and then forgot about.
+Local scripts that pull **your saved Instagram Reels and posts**, then turn them into markdown notes you can search. I use it to find events, niche tech updates, and tool links that I saved months ago and then forgot about.
 
 Nothing is uploaded. Media and notes stay on disk.
 
